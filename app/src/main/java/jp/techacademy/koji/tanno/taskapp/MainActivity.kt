@@ -70,7 +70,9 @@ class MainActivity : AppCompatActivity() {
                 when (changes) {
                     // UpdatedResults means this change represents an update/insert/delete operation
                     is UpdatedResults -> {
-                        reloadListView()
+                        CoroutineScope(Dispatchers.Default).launch {
+                            reloadListView()
+                        }
                     }
                     else -> {
                         // types other than UpdatedResults are not changes -- ignore them
@@ -82,7 +84,7 @@ class MainActivity : AppCompatActivity() {
         // ListViewの設定
         mTaskAdapter = TaskAdapter(this)
 
-        /*
+
         // ListViewをタップしたときの処理
         binding.listView1.setOnItemClickListener { parent, _, position, _ ->
             // 入力・編集する画面に繊維させる
@@ -107,7 +109,9 @@ class MainActivity : AppCompatActivity() {
                     val selectedTasks: RealmResults<Task> = query<Task>("id == $0", selectedTask.id).find()
                     delete(selectedTasks)
                 }
-                reloadListView()
+                CoroutineScope(Dispatchers.Default).launch {
+                    reloadListView()
+                }
             }
 
             builder.setNegativeButton("CANCEL", null)
@@ -117,20 +121,13 @@ class MainActivity : AppCompatActivity() {
 
             true
         }
-*/
 
-        //初回データ表示
-        reloadListView()
-
-    /*
-        // テスト初期データ読み込み
         CoroutineScope(Dispatchers.Default).launch {
-            addTaskForTest()
+            reloadListView()
         }
-*/
     }
 
-    private fun reloadListView() = runBlocking {
+    private suspend fun reloadListView() {
 
         // fetch tasks from the realm as Flowables
         // (https://www.mongodb.com/docs/realm/sdk/kotlin/realm-database/read/iteration/)
@@ -138,43 +135,16 @@ class MainActivity : AppCompatActivity() {
         val tasksFlow: Flow<ResultsChange<Task>> = mRealm.query<Task>().asFlow()
 
         tasksFlow.collect { tasks ->
-            Log.v("REALM",tasks.list.toString())
-
             for (task in tasks.list) {
                 mTaskAdapter.mTaskList.add(task)
             }
-            // TaskのListView用のアダプタに渡す
-            binding.listView1.adapter = mTaskAdapter
-
-            // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-            mTaskAdapter.notifyDataSetChanged()
-        }
-
- /*
-        val readTasksJob: Job = async {
-            tasksFlow.collect { results ->
-                when (results) {
-                    // print out initial results
-                    is InitialResults<Task> -> {
-                        for (task in results.list) {
-                            mTaskAdapter.mTaskList.add(task)
-                        }
-                    }
-                    else -> {
-                        // do nothing on changes
-                    }
-                }
+            runOnUiThread {
+                // TaskのListView用のアダプタに渡す
+                binding.listView1.adapter = mTaskAdapter
+                // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+                mTaskAdapter.notifyDataSetChanged()
             }
         }
-
-        readTasksJob.join()
-*/
-        // TaskのListView用のアダプタに渡す
-        binding.listView1.adapter = mTaskAdapter
-
-        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-        mTaskAdapter.notifyDataSetChanged()
-//        readTasksJob.cancel()
     }
 
     override fun onDestroy() {
