@@ -33,6 +33,8 @@ class InputActivity : AppCompatActivity() {
     private var mHour = 0
     private var mMinute = 0
     private var mTask: Task? = null
+    private var mTaskId = -1
+    private lateinit var mRealm: Realm
 
     private val mOnDateClickListener = View.OnClickListener {
         val datePickerDialog = DatePickerDialog(this,
@@ -62,10 +64,11 @@ class InputActivity : AppCompatActivity() {
     }
 
     private val mOnDoneClickListener = View.OnClickListener {
-        CoroutineScope(Dispatchers.Default).launch {
-            addTask()
-            finish()
-        }
+        addTask()
+
+        Log.v("INPUT","FINISH START")
+        finish()
+        Log.v("INPUT","FINISH END")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -89,13 +92,16 @@ class InputActivity : AppCompatActivity() {
 
         // EXTRA_TASKからTaskのidを取得して、idからTaskのインスタンスを取得する
         val intent = intent
-        val taskId = intent.getIntExtra(EXTRA_TASK, -1)
+        mTaskId = intent.getIntExtra(EXTRA_TASK, -1)
         val config = RealmConfiguration.Builder(schema = setOf(Task::class)).build()
-        val realm = Realm.open(config)
-        Log.d("Android","Start Query")
-        mTask = realm.query<Task>("id == $0", taskId).first().find()
-        Log.d("Android","End Query")
-        realm.close()
+        mRealm = Realm.open(config)
+
+        mTask = mRealm.query<Task>("id = $0", mTaskId).first().find()
+        Log.d("DEBUG", mTask.toString())
+        Log.d("DEBUG", mTask?.id.toString())
+        Log.d("DEBUG", mTask?.title.toString())
+        Log.d("DEBUG", mTask?.contents.toString())
+        Log.d("DEBUG", mTask?.date.toString())
 
         if (mTask == null) {
             // 新規作成の場合
@@ -109,7 +115,6 @@ class InputActivity : AppCompatActivity() {
             // 更新の場合
             contentBinding.titleEditText.setText(mTask!!.title)
             contentBinding.contentEditText.setText(mTask!!.contents)
-
             val calendar = Calendar.getInstance()
             calendar.time = mTask!!.date
             mYear = calendar.get(Calendar.YEAR)
@@ -118,10 +123,7 @@ class InputActivity : AppCompatActivity() {
             mHour = calendar.get(Calendar.HOUR_OF_DAY)
             mMinute = calendar.get(Calendar.MINUTE)
 
-            val dateString = mYear.toString() + "/" + String.format(
-                "%02d",
-                mMonth + 1
-            ) + "/" + String.format("%02d", mDay)
+            val dateString = mYear.toString() + "/" + String.format("%02d", mMonth + 1) + "/" + String.format("%02d", mDay)
             val timeString = String.format("%02d", mHour) + ":" + String.format("%02d", mMinute)
 
             contentBinding.dateButton.text = dateString
@@ -129,41 +131,49 @@ class InputActivity : AppCompatActivity() {
         }
     }
 
-    private suspend fun addTask() {
-        val config = RealmConfiguration.Builder(schema = setOf(Task::class)).build()
-        val realm = Realm.open(config)
+    private fun addTask() {
 
-        realm.write {
+//        val config = RealmConfiguration.Builder(schema = setOf(Task::class)).build()
+//        val realm = Realm.open(config)
+        val editTitle = contentBinding.titleEditText.text.toString()
+        val editContent = contentBinding.contentEditText.text.toString()
+        val calendar = GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute)
+        val editDate = calendar.time
 
-            if (mTask == null) {
+
+        mRealm.writeBlocking {
+
+            mTask = mRealm.query<Task>("id = $0", mTaskId).first().find()
+            Log.d("DEBUG", mTask.toString())
+            Log.d("DEBUG", mTask?.id.toString())
+            Log.d("DEBUG", mTask?.title.toString())
+            Log.d("DEBUG", mTask?.contents.toString())
+            Log.d("DEBUG", mTask?.date.toString())
+
+            if (mTask != null) {
+                mTask!!.title = editTitle
+                mTask!!.contents = editContent
+                mTask!!.date = editDate
+            } else {
                 // 新規作成の場合
-                mTask = Task()
-
-//                val taskRealmMaxId = realm.query<Task>().max("id")
-                val lastTask = realm.query<Task>().sort("id",Sort.DESCENDING).first().find()
+                val lastTask = mRealm.query<Task>().sort("id", Sort.DESCENDING).first().find()
                 var identifier: Int = 0
-                if (lastTask != null ) {
+                if (lastTask != null) {
                     identifier = lastTask!!.id + 1
                 }
-
-                mTask!!.id = identifier
+                this.copyToRealm(Task().apply {
+                    id = identifier
+                    title = editTitle
+                    contents = editContent
+                    date = editDate
+                })
             }
-
-            val title = contentBinding.titleEditText.text.toString()
-            val content = contentBinding.contentEditText.text.toString()
-            mTask!!.title = title
-            mTask!!.contents = content
-
-            val calendar = GregorianCalendar(mYear, mMonth, mDay, mHour, mMinute)
-            val date = calendar.time
-            mTask!!.date = date
-
-
         }
-        realm.close()
-
     }
 
-
+    override fun onDestroy() {
+        super.onDestroy()
+        mRealm.close()
+    }
 
 }

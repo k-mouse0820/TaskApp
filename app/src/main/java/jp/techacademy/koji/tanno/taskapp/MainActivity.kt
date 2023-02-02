@@ -20,6 +20,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.async
 import androidx.appcompat.app.AlertDialog
+import io.realm.kotlin.query.Sort
 import java.util.*
 import java.util.concurrent.ConcurrentSkipListMap
 
@@ -35,6 +36,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
+        Log.v("MAIN","ONCREATE-START")
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -63,6 +65,8 @@ class MainActivity : AppCompatActivity() {
 
         // flow.collect() is blocking -- run it in a background context
         // この後使うcollectはスレッドをとめてしまうので、バックグラウンドで動かす
+
+        Log.v("MAIN","CREATE-REALM-LISTENER-FLOW")
         val job = CoroutineScope(Dispatchers.Default).launch {
             // create a Flow from that collection, then add a listener to the Flow
             val tasksFlow =  tasks.asFlow()
@@ -70,9 +74,7 @@ class MainActivity : AppCompatActivity() {
                 when (changes) {
                     // UpdatedResults means this change represents an update/insert/delete operation
                     is UpdatedResults -> {
-                        CoroutineScope(Dispatchers.Default).launch {
-                            reloadListView()
-                        }
+                        reloadListView()
                     }
                     else -> {
                         // types other than UpdatedResults are not changes -- ignore them
@@ -81,9 +83,9 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+
         // ListViewの設定
         mTaskAdapter = TaskAdapter(this)
-
 
         // ListViewをタップしたときの処理
         binding.listView1.setOnItemClickListener { parent, _, position, _ ->
@@ -109,9 +111,9 @@ class MainActivity : AppCompatActivity() {
                     val selectedTasks: RealmResults<Task> = query<Task>("id == $0", selectedTask.id).find()
                     delete(selectedTasks)
                 }
-                CoroutineScope(Dispatchers.Default).launch {
-                    reloadListView()
-                }
+
+                reloadListView()
+
             }
 
             builder.setNegativeButton("CANCEL", null)
@@ -122,29 +124,34 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        CoroutineScope(Dispatchers.Default).launch {
-            reloadListView()
-        }
+        reloadListView()
+
     }
 
-    private suspend fun reloadListView() {
+    private fun reloadListView() {
 
         // fetch tasks from the realm as Flowables
         // (https://www.mongodb.com/docs/realm/sdk/kotlin/realm-database/read/iteration/)
         // val tasksFlow: Flow<ResultsChange<Task>> = mRealm.query<Task>().sort("date",Sort.DESCENDING).asFlow()
-        val tasksFlow: Flow<ResultsChange<Task>> = mRealm.query<Task>().asFlow()
-
-        tasksFlow.collect { tasks ->
-            for (task in tasks.list) {
-                mTaskAdapter.mTaskList.add(task)
-            }
-            runOnUiThread {
-                // TaskのListView用のアダプタに渡す
-                binding.listView1.adapter = mTaskAdapter
-                // 表示を更新するために、アダプターにデータが変更されたことを知らせる
-                mTaskAdapter.notifyDataSetChanged()
-            }
+        val tasks = mRealm.query<Task>().sort("id", Sort.DESCENDING).find()
+        Log.v("MAIN","STARTLIST")
+        for (task in tasks.toList()) {
+            Log.v("MAIN", task.id.toString())
+            Log.v("MAIN", task.title)
+            Log.v("MAIN", task.contents)
+            Log.v("MAIN", task.date.toString())
         }
+        Log.v("MAIN","ENDLIST")
+        mTaskAdapter.mTaskList = mRealm.copyFromRealm(tasks) as MutableList<Task>
+
+        // TaskのListView用のアダプタに渡す
+        Log.v("MAIN","pointA")
+        binding.listView1.adapter = mTaskAdapter
+        Log.v("MAIN","pointB")
+
+        // 表示を更新するために、アダプターにデータが変更されたことを知らせる
+        mTaskAdapter.notifyDataSetChanged()
+
     }
 
     override fun onDestroy() {

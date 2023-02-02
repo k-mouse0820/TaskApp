@@ -32,7 +32,7 @@
         android:layout_alignParentStart="true"
         android:layout_toLeftOf="@+id/times_button"
         android:text="----/--/--"
-        style="@style/Widget.AppCompat.Button.Borderless" />
+        style="@style/Widget.AppCompat.Button" />
     <Button
         android:id="@id/times_button"
         android:layout_width="96dp"
@@ -40,7 +40,7 @@
         android:layout_below="@id/content_edit_text"
         android:layout_alignParentRight="true"
         android:text="--:--"
-        style="@style/Widget.AppCompat.Button.Borderless"/>
+        style="@style/Widget.AppCompat.Button"/>
     <Button
         android:id="@+id/done_button"
         android:layout_width="96dp"
