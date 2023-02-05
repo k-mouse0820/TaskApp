@@ -9,7 +9,12 @@ import io.realm.kotlin.types.annotations.PrimaryKey
 open class Task : RealmObject, Serializable {
     var title: String = ""
     var contents: String = ""
-    var date: Date = Date()
+    var category: String = ""
+    var year = 0
+    var month = 0
+    var day = 0
+    var hour = 0
+    var minute = 0
 
     // id をプライマリーキーとして設定
     @PrimaryKey
@@ -19,4 +24,5 @@ open class Task : RealmObject, Serializable {
         this.title = title
         this.contents = contents
     }*/
+
 }
