@@ -36,7 +36,7 @@ import java.util.*
 
 const val EXTRA_TASK = "jp.techacademy.koji.tanno.taskapp.TASK"
 
-class MainActivity : AppCompatActivity(), RecyclerItemClickListener.OnRecyclerClickListener  {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var mTaskAdapter: RecyclerListAdapter
@@ -123,14 +123,14 @@ class MainActivity : AppCompatActivity(), RecyclerItemClickListener.OnRecyclerCl
         setContentView(listItemRecyclerview1Binding.root)
 
 
-        // ListViewをタップしたときの処理
+/*        // ListViewをタップしたときの処理
         fun onItemClick(view: View, position: Int) {
-            val task = view.mTaskAdapter.getItem(position) as Task
+            val task = mRecyclerView.adapter.getItem(position) as Task
             val intent = Intent(this, InputActivity::class.java)
             intent.putExtra(EXTRA_TASK, task.id)
             startActivity(intent)
         }
-*/
+
 
 
         // ListViewを長押ししたときの処理
@@ -197,48 +197,7 @@ class MainActivity : AppCompatActivity(), RecyclerItemClickListener.OnRecyclerCl
     }
 
 
-    private inner class RecyclerListAdapter(private val _listData: MutableList<Task>): RecyclerView.Adapter<RecyclerListViewHolder>() {
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerListViewHolder {
 
-            // LayoutInflaterオブジェクト
-            val inflater = LayoutInflater.from(parent.context)
-
-            // レイアウトファイルのインフレート（＝アイテムビュー）
-            val view = inflater.inflate(R.layout.listitem_recyclerview1, parent, false)
-
-            // インフレートしたアイテムビューをリスナとしてセット
-//            view.setOnClickListener(ItemClickListener())
-//            view.setOnLongClickListener(ItemLongClickListener())
-
-            // ビューホルダの作成、返却
-            return RecyclerListViewHolder(view)
-        }
-
-        // RecyclerViewがアダプタからビューホルダを受け取った際にRecyclerViewから呼び出される処理
-        override fun onBindViewHolder(holder: RecyclerListViewHolder, position: Int) {
-
-            // ビューホルダが保持するビューに、データを反映
-            val task = _listData[position]
-            holder._titleRow.text = task.title
-            holder._contentRow.text = task.contents
-        }
-
-        override fun getItemCount(): Int {
-            return _listData.size
-        }
-    }
-
-    private inner class RecyclerListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        // Item内に表示されるTextView
-        lateinit var _titleRow: TextView
-        lateinit var _contentRow: TextView
-
-        // イニシャライザ
-        init {
-            _titleRow = listItemRecyclerview1Binding.titleText
-            _contentRow = listItemRecyclerview1Binding.contentText
-        }
-    }
 
 /*
     private inner class ItemClickListener: View.OnClickListener {
