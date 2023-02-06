@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView.OnItemClickListener
 import android.widget.TextView
 import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
@@ -107,7 +108,6 @@ class MainActivity : AppCompatActivity() {
         // RecyclerViewにLinearLayoutManagerをセット
         mRecyclerView.layoutManager = layoutManager
 
-        mRecyclerView.addOnItemTouchListener(RecyclerItemClickListener(this, mRecyclerView, this))
 
         // 区切り線を表示するDividerItemDecorationオブジェクト
         val decorator = DividerItemDecoration(this, layoutManager.orientation)
@@ -119,10 +119,18 @@ class MainActivity : AppCompatActivity() {
         val mTaskAdapter = RecyclerListAdapter(rSortedTaskList)
         mRecyclerView.adapter = mTaskAdapter
 
-        listItemRecyclerview1Binding = ListitemRecyclerview1Binding.inflate(layoutInflater)
-        setContentView(listItemRecyclerview1Binding.root)
+//        listItemRecyclerview1Binding = ListitemRecyclerview1Binding.inflate(layoutInflater)
+//        setContentView(listItemRecyclerview1Binding.root)
 
-
+        /*
+        mTaskAdapter.setOnItemClickListener(object:RecyclerListAdapter.OnItemClickListener {
+            override fun onItemClickListener(view: View, position: Int, clickedTask: Task) {
+                val intent = Intent(this@MainActivity, InputActivity::class.java)
+                intent.putExtra(EXTRA_TASK, clickedTask.id)
+                startActivity(intent)
+            }
+        })
+*/
 /*        // ListViewをタップしたときの処理
         fun onItemClick(view: View, position: Int) {
             val task = mRecyclerView.adapter.getItem(position) as Task
@@ -171,8 +179,9 @@ class MainActivity : AppCompatActivity() {
             dialog.show()
 
             true
-        }
 */
+
+
         reloadListView()
 
     }
@@ -196,22 +205,58 @@ class MainActivity : AppCompatActivity() {
         mRealm.close()
     }
 
+}
 
+private class RecyclerListAdapter(listData: MutableList<Task>): RecyclerView.Adapter<RecyclerListViewHolder>() {
 
+    private val recyclerListData = listData
+    lateinit var clickListener: OnItemClickListener
 
-/*
-    private inner class ItemClickListener: View.OnClickListener {
-        override fun onClick(view: View) {
-            Log.v("MAIN","onClick")
-        }
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerListViewHolder {
+        val inflater = LayoutInflater.from(parent.context)
+        val view = inflater.inflate(R.layout.listitem_recyclerview1, parent, false)
+
+        // インフレートしたアイテムビューをリスナとしてセット
+//            view.setOnClickListener(ItemClickListener())
+//            view.setOnLongClickListener(ItemLongClickListener())
+
+        // ビューホルダの作成、返却
+        return RecyclerListViewHolder(view)
     }
 
-    private inner class ItemLongClickListener: View.OnLongClickListener {
-        override fun onLongClick(v: View?): Boolean {
+    // RecyclerViewがアダプタからビューホルダを受け取った際にRecyclerViewから呼び出される処理
+    override fun onBindViewHolder(holder: RecyclerListViewHolder, position: Int) {
 
-            Log.v("MAIN","onLongClick")
-            return true
+        // ビューホルダが保持するビューに、データを反映
+        //holder.taskId = recyclerListData[position].id
+        holder.titleRow.text = recyclerListData[position].title
+        holder.contentRow.text = recyclerListData[position].contents
+
+        holder.itemView.setOnClickListener {
+            clickListener.onItemClickListener(it,position,recyclerListData[position])
         }
+
+
     }
-*/
+    interface OnItemClickListener {
+        fun onItemClickListener(view: View, position: Int, clickedTask: Task)
+    }
+    fun setOnItemClickListener(clickListener: OnItemClickListener) {
+        this.clickListener = clickListener
+    }
+
+    override fun getItemCount(): Int {
+        return recyclerListData.size
+    }
+}
+
+private class RecyclerListViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+    var titleRow: TextView
+    var contentRow: TextView
+
+    init {
+        titleRow = itemView.findViewById<TextView>(R.id.titleText)
+        contentRow = itemView.findViewById<TextView>(R.id.contentText)
+    }
 }
