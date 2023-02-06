@@ -31,7 +31,6 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.realm.kotlin.query.Sort
-import jp.techacademy.koji.tanno.taskapp.databinding.ListitemRecyclerview1Binding
 import java.util.*
 
 
@@ -40,12 +39,10 @@ const val EXTRA_TASK = "jp.techacademy.koji.tanno.taskapp.TASK"
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var mTaskAdapter: RecyclerListAdapter
     private lateinit var mRealm: Realm
     private lateinit var job: Job
     private lateinit var mRecyclerView: RecyclerView
-    private lateinit var listItemRecyclerview1Binding: ListitemRecyclerview1Binding
-
+    private lateinit var mTaskAdapter: RecyclerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
 
@@ -102,27 +99,15 @@ class MainActivity : AppCompatActivity() {
 
         // RecyclerViewの設定
         mRecyclerView = binding.recyclerview1
-
-        // レイアウト配置とリストアイテムを管理するLinearLayoutManagerを設定
-        val layoutManager: LinearLayoutManager = LinearLayoutManager(this)
-        // RecyclerViewにLinearLayoutManagerをセット
-        mRecyclerView.layoutManager = layoutManager
-
+        mRecyclerView.adapter = RecyclerAdapter()
+        mRecyclerView.layoutManager = LinearLayoutManager(this)
 
         // 区切り線を表示するDividerItemDecorationオブジェクト
-        val decorator = DividerItemDecoration(this, layoutManager.orientation)
+        val decorator = DividerItemDecoration(this, LinearLayoutManager(this).orientation)
         mRecyclerView.addItemDecoration(decorator)
 
-        // リストデータを紐づけるRecyclerListAdapterに、realmの情報を登録
-        val rSortedTasks = mRealm.query<Task>().sort("id", Sort.DESCENDING).find()
-        val rSortedTaskList = mRealm.copyFromRealm(rSortedTasks) as MutableList<Task>
-        val mTaskAdapter = RecyclerListAdapter(rSortedTaskList)
-        mRecyclerView.adapter = mTaskAdapter
-
-//        listItemRecyclerview1Binding = ListitemRecyclerview1Binding.inflate(layoutInflater)
-//        setContentView(listItemRecyclerview1Binding.root)
-
         /*
+
         mTaskAdapter.setOnItemClickListener(object:RecyclerListAdapter.OnItemClickListener {
             override fun onItemClickListener(view: View, position: Int, clickedTask: Task) {
                 val intent = Intent(this@MainActivity, InputActivity::class.java)
@@ -187,12 +172,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun reloadListView() {
-
-        val rSortedTasks = mRealm.query<Task>().sort("id", Sort.DESCENDING).find()
-        val rSortedTaskList = mRealm.copyFromRealm(rSortedTasks) as MutableList<Task>
-        val mTaskAdapter = RecyclerListAdapter(rSortedTaskList)
+        val mTaskAdapter = RecyclerAdapter()
         mRecyclerView.adapter = mTaskAdapter
-
         // 表示を更新するために、アダプターにデータが変更されたことを知らせる
         mTaskAdapter.notifyDataSetChanged()
 
@@ -207,6 +188,8 @@ class MainActivity : AppCompatActivity() {
 
 }
 
+
+/*
 private class RecyclerListAdapter(listData: MutableList<Task>): RecyclerView.Adapter<RecyclerListViewHolder>() {
 
     private val recyclerListData = listData
@@ -232,17 +215,12 @@ private class RecyclerListAdapter(listData: MutableList<Task>): RecyclerView.Ada
         holder.titleRow.text = recyclerListData[position].title
         holder.contentRow.text = recyclerListData[position].contents
 
-        holder.itemView.setOnClickListener {
-            clickListener.onItemClickListener(it,position,recyclerListData[position])
-        }
-
-
     }
     interface OnItemClickListener {
         fun onItemClickListener(view: View, position: Int, clickedTask: Task)
     }
-    fun setOnItemClickListener(clickListener: OnItemClickListener) {
-        this.clickListener = clickListener
+    fun setOnItemClickListener(listener: OnItemClickListener) {
+        this.clickListener = listener
     }
 
     override fun getItemCount(): Int {
@@ -260,3 +238,4 @@ private class RecyclerListViewHolder(itemView: View) : RecyclerView.ViewHolder(i
         contentRow = itemView.findViewById<TextView>(R.id.contentText)
     }
 }
+*/
