@@ -123,7 +123,7 @@ class InputActivity : AppCompatActivity() {
             // 更新の場合
             contentBinding.titleEditText.setText(rTask!!.title)
             contentBinding.contentEditText.setText(rTask!!.contents)
-            contentBinding.contentEditText.setText(rTask!!.category)
+            contentBinding.categoryEditText.setText(rTask!!.category)
             mYear = rTask!!.year
             mMonth = rTask!!.month
             mDay = rTask!!.day
